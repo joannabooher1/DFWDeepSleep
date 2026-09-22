@@ -1,0 +1,483 @@
+<style>
+  .pivot-dash {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --page-plane:     #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --gridline:       #e1e0d9;
+    --baseline:       #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --series-sleep:   #2a78d6; /* slot 1 blue */
+    --series-ortho:   #eb6834; /* slot 2 orange */
+    --series-tmd:     #1baf7a; /* slot 3 aqua */
+    --series-laser:   #eda100; /* slot 4 yellow */
+    --series-muted:   #c3c2b7;
+    --seq-250:        #86b6ef;
+    --seq-350:        #5598e7;
+    --seq-450:        #2a78d6;
+    --seq-550:        #1c5cab;
+    --status-good:    #0ca30c;
+    --status-warning: #fab219;
+    --status-serious: #ec835a;
+    --status-critical:#d03b3b;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page-plane);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 24px 20px 60px;
+    box-sizing: border-box;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .pivot-dash {
+      color-scheme: dark;
+      --surface-1:      #1a1a19;
+      --page-plane:     #0d0d0d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --gridline:       #2c2c2a;
+      --baseline:       #383835;
+      --border:         rgba(255,255,255,0.10);
+      --series-sleep:   #3987e5;
+      --series-ortho:   #d95926;
+      --series-tmd:     #199e70;
+      --series-laser:   #c98500;
+      --series-muted:   #383835;
+      --seq-250:        #86b6ef;
+      --seq-350:        #5598e7;
+      --seq-450:        #3987e5;
+      --seq-550:        #1c5cab;
+      --status-good:    #0ca30c;
+      --status-warning: #fab219;
+      --status-serious: #ec835a;
+      --status-critical:#e66767;
+    }
+  }
+  :root[data-theme="dark"] .pivot-dash {
+    color-scheme: dark;
+    --surface-1:      #1a1a19;
+    --page-plane:     #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --gridline:       #2c2c2a;
+    --baseline:       #383835;
+    --border:         rgba(255,255,255,0.10);
+    --series-sleep:   #3987e5;
+    --series-ortho:   #d95926;
+    --series-tmd:     #199e70;
+    --series-laser:   #c98500;
+    --series-muted:   #383835;
+  }
+
+  .pivot-dash * { box-sizing: border-box; }
+  .pivot-wrap { max-width: 1080px; margin: 0 auto; }
+
+  .pivot-header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+  .pivot-title { font-size: 22px; font-weight: 700; margin: 0; }
+  .pivot-subtitle { color: var(--text-secondary); font-size: 13px; margin: 2px 0 20px; }
+
+  .pivot-banner { border-radius: 10px; padding: 12px 16px; font-size: 13.5px; margin-bottom: 20px; border: 1px solid var(--border); line-height: 1.5; }
+  .pivot-banner.preview { background: color-mix(in srgb, var(--series-sleep) 10%, var(--surface-1)); color: var(--text-primary); }
+  .pivot-banner.error { background: color-mix(in srgb, var(--status-critical) 12%, var(--surface-1)); color: var(--text-primary); }
+  .pivot-banner code { background: var(--border); padding: 1px 5px; border-radius: 4px; }
+
+  .pivot-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .pivot-tile { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+  .pivot-tile .label { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+  .pivot-tile .value { font-size: 26px; font-weight: 700; line-height: 1; }
+  .pivot-tile .sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+  .pivot-card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; margin-bottom: 20px; }
+  .pivot-card h2 { font-size: 15px; margin: 0 0 2px; }
+  .pivot-card .card-note { font-size: 12.5px; color: var(--text-secondary); margin: 0 0 14px; }
+
+  .pivot-bar-row { display: grid; grid-template-columns: 170px 1fr 46px; align-items: center; gap: 10px; margin-bottom: 9px; font-size: 13px; }
+  .pivot-bar-row .rowlabel { color: var(--text-secondary); }
+  .pivot-bar-track { background: var(--gridline); border-radius: 4px; height: 14px; overflow: hidden; }
+  .pivot-bar-fill { height: 100%; border-radius: 4px; min-width: 3px; }
+  .pivot-bar-row .rowcount { text-align: right; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+
+  .pivot-servicegrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+  .pivot-service-card { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+  .pivot-service-card .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+  .pivot-service-card .sname { font-size: 13px; color: var(--text-secondary); }
+  .pivot-service-card .sval { font-size: 22px; font-weight: 700; margin-top: 4px; }
+  .pivot-service-card .sshare { font-size: 12px; color: var(--text-muted); }
+
+  .pivot-legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 10px 0 16px; font-size: 12.5px; color: var(--text-secondary); }
+  .pivot-legend span.swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 5px; vertical-align: -1px; }
+
+  .pivot-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 720px) { .pivot-two-col { grid-template-columns: 1fr; } }
+
+  .pivot-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .pivot-table th { text-align: left; color: var(--text-muted); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.02em; padding: 0 8px 8px 0; border-bottom: 1px solid var(--gridline); }
+  .pivot-table td { padding: 7px 8px 7px 0; border-bottom: 1px solid var(--gridline); }
+  .pivot-table tr:last-child td { border-bottom: none; }
+  .pivot-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  .pivot-flags { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .pivot-flags li { display: flex; gap: 10px; font-size: 13px; line-height: 1.45; }
+  .pivot-flags .flagdot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 50%; background: var(--status-warning); margin-top: 6px; }
+
+  .pivot-footer { color: var(--text-muted); font-size: 12px; text-align: center; margin-top: 8px; }
+
+  .pivot-tableview { display: none; margin-top: 12px; }
+  .pivot-tableview.shown { display: block; }
+  .pivot-toggle { background: none; border: 1px solid var(--border); color: var(--text-secondary); font-size: 12px; padding: 4px 10px; border-radius: 6px; cursor: pointer; }
+  .pivot-toggle:hover { background: var(--gridline); }
+  .card-headrow { display:flex; align-items:center; justify-content: space-between; gap: 10px; }
+</style>
+
+<div class="pivot-dash">
+  <div class="pivot-wrap">
+    <div class="pivot-header">
+      <h1 class="pivot-title">Dr. Leena's Practice — Referral &amp; KPI Dashboard</h1>
+    </div>
+    <p class="pivot-subtitle" id="pivot-updated">Loading live data…</p>
+
+    <div id="pivot-banner-slot"></div>
+
+    <div class="pivot-stats" id="pivot-stats"></div>
+
+    <div class="pivot-card">
+      <h2>Referral Pipeline (current snapshot)</h2>
+      <p class="card-note">Every active patient in the Referral Log, grouped by where they sit right now.</p>
+      <div id="pivot-funnel"></div>
+    </div>
+
+    <div class="pivot-card">
+      <div class="card-headrow">
+        <div>
+          <h2>Service Line Mix</h2>
+          <p class="card-note">Share of tracked patients by service line, from the Referral Log's Status column.</p>
+        </div>
+      </div>
+      <div class="pivot-servicegrid" id="pivot-servicelines"></div>
+    </div>
+
+    <div class="pivot-two-col">
+      <div class="pivot-card">
+        <h2>Referral Sources</h2>
+        <p class="card-note">Who's sending patients in (from the Specialist field).</p>
+        <table class="pivot-table" id="pivot-sources"></table>
+      </div>
+      <div class="pivot-card">
+        <h2>Top Referring Providers</h2>
+        <p class="card-note">Named doctors/providers behind those referrals.</p>
+        <table class="pivot-table" id="pivot-providers"></table>
+      </div>
+    </div>
+
+    <div class="pivot-card">
+      <div class="card-headrow">
+        <div>
+          <h2>Monthly KPI History (Jan–Aug 2026)</h2>
+          <p class="card-note">Reported by the practice before this live tracker existed. Once Consult Date is filled in consistently in the Referral Log, this chart will extend with live monthly numbers.</p>
+        </div>
+        <button class="pivot-toggle" id="pivot-trend-toggle" type="button">Table view</button>
+      </div>
+      <div class="pivot-legend" id="pivot-trend-legend"></div>
+      <div id="pivot-trend-chart"></div>
+      <div class="pivot-tableview" id="pivot-trend-table"></div>
+    </div>
+
+    <div class="pivot-card">
+      <h2>Data Quality Flags</h2>
+      <p class="card-note">Things worth fixing in the source sheet so the numbers above stay trustworthy.</p>
+      <ul class="pivot-flags" id="pivot-flags"></ul>
+    </div>
+
+    <p class="pivot-footer" id="pivot-footer"></p>
+  </div>
+</div>
+
+<script>
+(function () {
+  // ---- CONFIG -------------------------------------------------------
+  // Once the Apps Script bridge is deployed (see SETUP_INSTRUCTIONS.md),
+  // paste its /exec URL here. Leaving the placeholder shows a labeled
+  // preview built from a one-time snapshot of the Referral Log instead —
+  // it will NOT silently pass off as live data.
+  var APPS_SCRIPT_URL = 'PASTE_APPS_SCRIPT_WEB_APP_URL_HERE';
+
+  var EMBEDDED_PREVIEW_DATA = {"asOf": "2026-09-16T00:00:00.000Z", "totalPatients": 85, "funnel": [{"key": "new", "label": "New / Not Contacted", "count": 11}, {"key": "contacted", "label": "Contacted / Follow-up", "count": 6}, {"key": "scheduled", "label": "Consult Scheduled", "count": 5}, {"key": "no_show", "label": "No-Show / Cancelled", "count": 2}, {"key": "consult_complete", "label": "Consult Complete", "count": 5}, {"key": "diagnostics", "label": "Diagnostics / Sleep Study", "count": 2}, {"key": "on_hold", "label": "On Hold", "count": 4}, {"key": "active_treatment", "label": "Active Treatment", "count": 20}, {"key": "waiting_delivery", "label": "Waiting on Delivery", "count": 3}, {"key": "declined", "label": "Declined", "count": 22}, {"key": "referred_out", "label": "Referred Out", "count": 5}], "serviceLines": [{"name": "Sleep", "count": 64}, {"name": "Unclassified", "count": 11}, {"name": "Orthodontics", "count": 9}, {"name": "Laser", "count": 1}], "referralSources": [{"name": "Not recorded", "count": 59}, {"name": "Self/Online", "count": 10}, {"name": "Chiropractor", "count": 5}, {"name": "Dental", "count": 4}, {"name": "Primary Care", "count": 4}, {"name": "Friends/Family", "count": 3}], "referringProviders": [{"name": "Dr. Spencer Dupre", "count": 4}, {"name": "Dr. Sukrita B. Matta", "count": 3}, {"name": "Shriya Doreswamy", "count": 2}, {"name": "Meagan Alpha", "count": 1}, {"name": "Joey Kramer", "count": 1}], "dataFlags": ["72 of 85 patients have no DATE REFERRED or Consult Date \u2014 monthly trending can't be computed live until dates are entered consistently.", "No TMD cases found in the Referral Log \u2014 TMD isn't being tracked here yet. Add a TMD-specific Status (or a Service Line column) if you want it to show up live.", "59 of 85 patients have no referral source (Specialist column) recorded \u2014 referral-source reporting will undercount until that's filled in."], "historicalKPI": {"months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"], "sleepConsults": [0, 3, 10, 4, 6, 8, 4, 4], "sleepConsultsClosed": [0, 2, 2, 6, 3, 2, 2, 2], "sleepStudiesOrdered": [3, 4, 5, 3, 3, 10, 4, 4], "sleepAppliancesSold": [1, 2, 2, 6, 3, 2, 2, 2], "sonoBandsSold": [0, 2, 2, 0, 3, 5, 3, 1], "orthoConsults": [3, 4, 2, 4, 7, 4, 3, 7], "orthoConsultsClosed": [2, 2, 2, 2, 1, 2, 4, 4], "tmdConsults": [0, 3, 1, 1, 1, 0, 0, 2], "tmdConsultsClosed": [0, 0, 0, 1, 1, 0, 0, 0], "laserConsults": [0, 0, 0, 0, 0, 0, 0, 0], "laserTreatmentsDone": [0, 0, 0, 0, 3, 5, 5, 2]}};
+
+  var STAGE_COLORS = {
+    new: 'var(--series-muted)',
+    contacted: 'var(--seq-250)',
+    scheduled: 'var(--seq-350)',
+    no_show: 'var(--status-serious)',
+    consult_complete: 'var(--seq-450)',
+    diagnostics: 'var(--seq-350)',
+    on_hold: 'var(--status-warning)',
+    active_treatment: 'var(--status-good)',
+    waiting_delivery: 'var(--seq-550)',
+    declined: 'var(--status-critical)',
+    referred_out: 'var(--series-muted)'
+  };
+
+  var SERVICE_COLORS = {
+    Sleep: 'var(--series-sleep)',
+    Orthodontics: 'var(--series-ortho)',
+    TMD: 'var(--series-tmd)',
+    Laser: 'var(--series-laser)',
+    Unclassified: 'var(--series-muted)'
+  };
+
+  function fmtDate(iso) {
+    try {
+      var d = new Date(iso);
+      return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+    } catch (e) { return iso; }
+  }
+
+  function el(tag, cls, html) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (html !== undefined) e.innerHTML = html;
+    return e;
+  }
+
+  function renderBanner(kind, html) {
+    var slot = document.getElementById('pivot-banner-slot');
+    slot.innerHTML = '';
+    if (!kind) return;
+    var b = el('div', 'pivot-banner ' + kind, html);
+    slot.appendChild(b);
+  }
+
+  function renderStats(data) {
+    var stats = document.getElementById('pivot-stats');
+    stats.innerHTML = '';
+    var byKey = {};
+    data.funnel.forEach(function (f) { byKey[f.key] = f.count; });
+    var inPipeline = (byKey.new||0)+(byKey.contacted||0)+(byKey.scheduled||0)+(byKey.consult_complete||0)+(byKey.diagnostics||0)+(byKey.on_hold||0)+(byKey.waiting_delivery||0);
+    var declinedPct = data.totalPatients ? Math.round(100 * (byKey.declined||0) / data.totalPatients) : 0;
+    var tiles = [
+      { label: 'Total Patients Tracked', value: data.totalPatients, sub: 'in the Referral Log' },
+      { label: 'Active in Pipeline', value: inPipeline, sub: 'not yet closed, declined, or referred out' },
+      { label: 'In Active Treatment', value: byKey.active_treatment||0, sub: 'across all service lines' },
+      { label: 'Declined', value: (byKey.declined||0), sub: declinedPct + '% of total' }
+    ];
+    tiles.forEach(function (t) {
+      var tile = el('div', 'pivot-tile');
+      tile.appendChild(el('div', 'label', t.label));
+      tile.appendChild(el('div', 'value', String(t.value)));
+      tile.appendChild(el('div', 'sub', t.sub));
+      stats.appendChild(tile);
+    });
+  }
+
+  function renderFunnel(data) {
+    var wrap = document.getElementById('pivot-funnel');
+    wrap.innerHTML = '';
+    var max = Math.max.apply(null, data.funnel.map(function (f) { return f.count; }).concat([1]));
+    data.funnel.forEach(function (f) {
+      var row = el('div', 'pivot-bar-row');
+      row.appendChild(el('div', 'rowlabel', f.label));
+      var track = el('div', 'pivot-bar-track');
+      var fill = el('div', 'pivot-bar-fill');
+      var pct = Math.round((f.count / max) * 100);
+      fill.style.width = Math.max(pct, f.count > 0 ? 2 : 0) + '%';
+      fill.style.background = STAGE_COLORS[f.key] || 'var(--series-sleep)';
+      track.appendChild(fill);
+      row.appendChild(track);
+      row.appendChild(el('div', 'rowcount', String(f.count)));
+      wrap.appendChild(row);
+    });
+  }
+
+  function renderServiceLines(data) {
+    var grid = document.getElementById('pivot-servicelines');
+    grid.innerHTML = '';
+    var order = ['Sleep', 'Orthodontics', 'TMD', 'Laser', 'Unclassified'];
+    var byName = {};
+    data.serviceLines.forEach(function (s) { byName[s.name] = s.count; });
+    order.forEach(function (name) {
+      var count = byName[name] || 0;
+      var pct = data.totalPatients ? Math.round(100 * count / data.totalPatients) : 0;
+      var card = el('div', 'pivot-service-card');
+      var nameRow = el('div', 'sname');
+      nameRow.innerHTML = '<span class="dot" style="background:' + (SERVICE_COLORS[name] || 'var(--series-muted)') + '"></span>' + (name === 'Unclassified' ? 'Unclassified / No Status' : name);
+      card.appendChild(nameRow);
+      card.appendChild(el('div', 'sval', String(count)));
+      card.appendChild(el('div', 'sshare', pct + '% of total' + (name === 'TMD' && count === 0 ? ' — not yet tracked' : '')));
+      grid.appendChild(card);
+    });
+  }
+
+  function renderTable(tableEl, rows, colLabel) {
+    tableEl.innerHTML = '';
+    var thead = el('thead', '', '<tr><th>' + colLabel + '</th><th style="text-align:right">Count</th></tr>');
+    tableEl.appendChild(thead);
+    var tbody = el('tbody');
+    if (!rows.length) {
+      tbody.appendChild(el('tr', '', '<td colspan="2" style="color:var(--text-muted)">No data recorded yet</td>'));
+    }
+    rows.slice(0, 8).forEach(function (r) {
+      var tr = el('tr');
+      tr.appendChild(el('td', '', r.name));
+      tr.appendChild(el('td', 'num', String(r.count)));
+      tbody.appendChild(tr);
+    });
+    tableEl.appendChild(tbody);
+  }
+
+  function renderTrend(data) {
+    var legend = document.getElementById('pivot-trend-legend');
+    var chart = document.getElementById('pivot-trend-chart');
+    var tableWrap = document.getElementById('pivot-trend-table');
+    legend.innerHTML = '';
+    chart.innerHTML = '';
+    tableWrap.innerHTML = '';
+
+    var h = data.historicalKPI;
+    var series = [
+      { key: 'sleepConsults', label: 'Sleep Consults', color: 'var(--series-sleep)' },
+      { key: 'orthoConsults', label: 'Ortho Consults', color: 'var(--series-ortho)' },
+      { key: 'tmdConsults', label: 'TMD Consults', color: 'var(--series-tmd)' },
+      { key: 'laserConsults', label: 'Laser Consults', color: 'var(--series-laser)' }
+    ];
+
+    series.forEach(function (s) {
+      var item = el('span', '', '<span class="swatch" style="background:' + s.color + '"></span>' + s.label);
+      legend.appendChild(item);
+    });
+
+    var W = 640, H = 220, padL = 30, padB = 24, padT = 10, padR = 10;
+    var months = h.months;
+    var allVals = series.reduce(function (acc, s) { return acc.concat(h[s.key]); }, []);
+    var max = Math.max.apply(null, allVals.concat([1]));
+    var stepX = (W - padL - padR) / (months.length - 1);
+    var svgNS = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', 'Monthly consult trend by service line, January through August 2026');
+
+    // gridlines + y labels
+    var ticks = 4;
+    for (var t = 0; t <= ticks; t++) {
+      var val = Math.round((max / ticks) * t);
+      var y = H - padB - ((H - padT - padB) * (val / max));
+      var line = document.createElementNS(svgNS, 'line');
+      line.setAttribute('x1', padL); line.setAttribute('x2', W - padR);
+      line.setAttribute('y1', y); line.setAttribute('y2', y);
+      line.setAttribute('stroke', 'var(--gridline)'); line.setAttribute('stroke-width', '1');
+      svg.appendChild(line);
+      var label = document.createElementNS(svgNS, 'text');
+      label.setAttribute('x', 2); label.setAttribute('y', y + 3);
+      label.setAttribute('font-size', '9'); label.setAttribute('fill', 'var(--text-muted)');
+      label.textContent = val;
+      svg.appendChild(label);
+    }
+    // x labels
+    months.forEach(function (m, i) {
+      var x = padL + stepX * i;
+      var label = document.createElementNS(svgNS, 'text');
+      label.setAttribute('x', x); label.setAttribute('y', H - 6);
+      label.setAttribute('font-size', '9'); label.setAttribute('fill', 'var(--text-muted)');
+      label.setAttribute('text-anchor', 'middle');
+      label.textContent = m;
+      svg.appendChild(label);
+    });
+
+    series.forEach(function (s) {
+      var vals = h[s.key];
+      var points = vals.map(function (v, i) {
+        var x = padL + stepX * i;
+        var y = H - padB - ((H - padT - padB) * (v / max));
+        return x + ',' + y;
+      }).join(' ');
+      var poly = document.createElementNS(svgNS, 'polyline');
+      poly.setAttribute('points', points);
+      poly.setAttribute('fill', 'none');
+      poly.setAttribute('stroke', s.color);
+      poly.setAttribute('stroke-width', '2');
+      poly.setAttribute('stroke-linecap', 'round');
+      poly.setAttribute('stroke-linejoin', 'round');
+      svg.appendChild(poly);
+      vals.forEach(function (v, i) {
+        var x = padL + stepX * i;
+        var y = H - padB - ((H - padT - padB) * (v / max));
+        var c = document.createElementNS(svgNS, 'circle');
+        c.setAttribute('cx', x); c.setAttribute('cy', y); c.setAttribute('r', '3');
+        c.setAttribute('fill', s.color);
+        var titleEl = document.createElementNS(svgNS, 'title');
+        titleEl.textContent = s.label + ' — ' + months[i] + ': ' + v;
+        c.appendChild(titleEl);
+        svg.appendChild(c);
+      });
+    });
+
+    chart.appendChild(svg);
+
+    // table view (accessibility twin)
+    var table = el('table', 'pivot-table');
+    var headRow = '<tr><th>Month</th>' + series.map(function (s) { return '<th style="text-align:right">' + s.label + '</th>'; }).join('') + '</tr>';
+    table.appendChild(el('thead', '', headRow));
+    var tbody = el('tbody');
+    months.forEach(function (m, i) {
+      var cells = series.map(function (s) { return '<td class="num">' + h[s.key][i] + '</td>'; }).join('');
+      tbody.appendChild(el('tr', '', '<td>' + m + '</td>' + cells));
+    });
+    table.appendChild(tbody);
+    tableWrap.appendChild(table);
+  }
+
+  function renderFlags(data) {
+    var list = document.getElementById('pivot-flags');
+    list.innerHTML = '';
+    if (!data.dataFlags || !data.dataFlags.length) {
+      list.appendChild(el('li', '', 'No data quality issues detected.'));
+      return;
+    }
+    data.dataFlags.forEach(function (f) {
+      var li = el('li');
+      li.appendChild(el('span', 'flagdot'));
+      li.appendChild(el('span', '', f));
+      list.appendChild(li);
+    });
+  }
+
+  function render(data) {
+    document.getElementById('pivot-updated').textContent = 'Last updated ' + fmtDate(data.asOf);
+    renderStats(data);
+    renderFunnel(data);
+    renderServiceLines(data);
+    renderTable(document.getElementById('pivot-sources'), data.referralSources, 'Source');
+    renderTable(document.getElementById('pivot-providers'), data.referringProviders, 'Provider');
+    renderTrend(data);
+    renderFlags(data);
+    document.getElementById('pivot-footer').textContent = 'Source: Referral Log Google Sheet, read live via Apps Script.';
+  }
+
+  document.getElementById('pivot-trend-toggle').addEventListener('click', function () {
+    var tv = document.getElementById('pivot-trend-table');
+    var chart = document.getElementById('pivot-trend-chart');
+    var shown = tv.classList.toggle('shown');
+    chart.style.display = shown ? 'none' : '';
+    this.textContent = shown ? 'Chart view' : 'Table view';
+  });
+
+  var isPlaceholder = APPS_SCRIPT_URL.indexOf('PASTE_') === 0;
+
+  if (isPlaceholder) {
+    renderBanner('preview', '<strong>Preview mode.</strong> This is a one-time snapshot of the Referral Log pulled on Sep 16, 2026 — not live yet. Deploy the Apps Script bridge and paste its URL into <code>APPS_SCRIPT_URL</code> in this file to make it live (see SETUP_INSTRUCTIONS.md).');
+    render(EMBEDDED_PREVIEW_DATA);
+  } else {
+    fetch(APPS_SCRIPT_URL)
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (data) { render(data); })
+      .catch(function (err) {
+        renderBanner('error', '<strong>Could not load live data.</strong> ' + err.message + '. Check that the Apps Script web app is deployed with access set to "Anyone," and that the URL in <code>APPS_SCRIPT_URL</code> is the one ending in <code>/exec</code>.');
+        document.getElementById('pivot-updated').textContent = 'Not connected';
+      });
+  }
+})();
+</script>
